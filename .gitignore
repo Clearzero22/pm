@@ -1,0 +1,32 @@
+# 编辑器临时文件
+*.swp
+*.swo
+*~
+.*.swp
+
+# IDE 配置
+.vscode/
+.idea/
+*.sublime-*
+
+# 临时文件
+*.tmp
+*.bak
+*.log
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 测试生成的配置（runtime）
+config/
+*.yaml
+!presets/*.yaml
+
+# OS 文件
+.DS_Store
+Thumbs.db
+
+# 备份文件
+*~

@@ -1,0 +1,25 @@
+# 学习模式预设
+# 包含：笔记/编辑器 + 终端
+
+name: "学习模式"
+description: "笔记/编辑器 + 终端"
+layout: "split-vertical"
+
+panes:
+  - name: "editor"
+    type: "editor"
+    tool: "nvim"
+    size: "70%"
+    position: "top"
+  
+  - name: "terminal"
+    type: "terminal"
+    tool: "zsh"
+    size: "30%"
+    position: "bottom"
+
+recommended_editors:
+  - nvim
+  - vim
+  - code
+  - zed

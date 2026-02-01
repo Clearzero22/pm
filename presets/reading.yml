@@ -1,0 +1,29 @@
+# 阅读模式预设
+# 包含：文件查看 + 笔记/终端
+
+name: "阅读模式"
+description: "文件查看 + 笔记/终端"
+layout: "split-horizontal"
+
+panes:
+  - name: "viewer"
+    type: "file_viewer"
+    tool: "ls"
+    size: "50%"
+    position: "left"
+  
+  - name: "terminal"
+    type: "terminal"
+    tool: "zsh"
+    size: "50%"
+    position: "right"
+
+recommended_viewers:
+  - zathura
+  - okular
+  - less
+  - bat
+
+recommended_note_tools:
+  - obsidian
+  - logseq

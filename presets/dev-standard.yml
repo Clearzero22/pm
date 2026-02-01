@@ -1,0 +1,25 @@
+# 标准开发模式预设
+# 包含：编辑器 + 终端
+
+name: "标准开发模式"
+description: "编辑器 + 终端"
+layout: "split-horizontal"
+
+panes:
+  - name: "editor"
+    type: "editor"
+    tool: "zed"
+    size: "70%"
+    position: "left"
+  
+  - name: "terminal"
+    type: "terminal"
+    tool: "zsh"
+    size: "30%"
+    position: "right"
+
+recommended_editors:
+  - zed
+  - code
+  - nvim
+  - vim

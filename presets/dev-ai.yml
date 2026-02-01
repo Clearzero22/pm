@@ -1,0 +1,36 @@
+# AI 开发模式预设
+# 包含：编辑器 + AI 工具 + 终端
+
+name: "AI 开发模式"
+description: "Claude/Codex + 编辑器 + 终端"
+layout: "tiled"
+
+panes:
+  - name: "editor"
+    type: "editor"
+    tool: "zed"
+    size: "50%"
+    position: "left"
+  
+  - name: "ai"
+    type: "ai_tool"
+    tool: "claude"
+    size: "25%"
+    position: "right-top"
+    args: ["--agent"]
+  
+  - name: "terminal"
+    type: "terminal"
+    tool: "zsh"
+    size: "25%"
+    position: "right-bottom"
+
+recommended_editors:
+  - zed
+  - code
+  - nvim
+
+recommended_ai_tools:
+  - claude
+  - codex
+  - aider
