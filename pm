@@ -12,21 +12,35 @@
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export PROJECT_ROOT
 
-# 颜色定义
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-MAGENTA='\033[0;35m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-NC='\033[0m'
+# 颜色定义 - 使用 tput 以获得更好的兼容性
+if command -v tput &> /dev/null && tput setaf 0 &> /dev/null 2>&1; then
+    # 使用 tput
+    RED=$(tput setaf 1)
+    GREEN=$(tput setaf 2)
+    YELLOW=$(tput setaf 3)
+    BLUE=$(tput setaf 4)
+    MAGENTA=$(tput setaf 5)
+    CYAN=$(tput setaf 6)
+    BOLD=$(tput bold)
+    NC=$(tput sgr0)
+else
+    # 回退到 ANSI 转义序列
+    RED='\033[0;31m'
+    GREEN='\033[0;32m'
+    YELLOW='\033[1;33m'
+    BLUE='\033[0;34m'
+    MAGENTA='\033[0;35m'
+    CYAN='\033[0;36m'
+    BOLD='\033[1m'
+    NC='\033[0m'
+fi
 
 # 工具函数
-info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-error() { echo -e "${RED}[ERROR]${NC} $1"; }
+info() { printf "%b[INFO]%b %s\n" "${BLUE}" "${NC}" "$1"; }
+success() { printf "%b[SUCCESS]%b %s\n" "${GREEN}" "${NC}" "$1"; }
+warning() { printf "%b[WARNING]%b %s\n" "${YELLOW}" "${NC}" "$1"; }
+error() { printf "%b[ERROR]%b %s\n" "${RED}" "${NC}" "$1"; }
+echo_c() { printf "%b\n" "$1"; }
 
 # 初始化环境
 pm_init() {
@@ -43,57 +57,57 @@ pm_init() {
 
 # 显示帮助信息
 pm_show_help() {
-    cat << HELP
-${BOLD}${CYAN}Project Manager (pm) - 跨平台项目管理器${NC}
-
-${BOLD}用法:${NC}
-  pm [命令] [选项]
-
-${BOLD}命令:${NC}
-  ${BOLD}项目管理:${NC}
-    pm list, ls                      列出所有项目
-    pm select                        使用 fzf 选择项目
-    pm open <project-id>             打开项目（使用默认工具）
-    pm start <project-id>            启动完整环境（tmux会话）
-    pm add                           添加新项目
-    pm add -i, --interactive         交互式添加项目
-    pm edit <project-id>             编辑项目配置
-    pm remove <project-id>           删除项目
-    pm info <project-id>             显示项目详情
-    pm search <query>                搜索项目
-
-  ${BOLD}环境管理:${NC}
-    pm session list                  列出 tmux 会话
-    pm session attach <name>         附加到会话
-    pm session kill <name>           销毁会话
-
-  ${BOLD}配置管理:${NC}
-    pm config                        编辑配置
-    pm config init                   初始化配置
-    pm preset list                   列出可用预设
-
-  ${BOLD}其他:${NC}
-    pm help                          显示此帮助信息
-    pm version                       显示版本信息
-    pm info                          显示系统信息
-
-${BOLD}示例:${NC}
-  pm                                 # 显示主菜单
-  pm select                          # 使用 fzf 选择项目
-  pm start my-app                    # 启动项目的完整环境
-  pm add -i                          # 交互式添加项目
-  pm search rust                     # 搜索包含 'rust' 的项目
-
-${BOLD}项目主页:${NC} https://github.com/your-username/pm-project-manager
-HELP
+    echo ""
+    echo_c "${BOLD}${CYAN}Project Manager (pm) - 跨平台项目管理器${NC}"
+    echo ""
+    echo_c "${BOLD}用法:${NC}"
+    echo "  pm [命令] [选项]"
+    echo ""
+    echo_c "${BOLD}命令:${NC}"
+    echo_c "  ${BOLD}项目管理:${NC}"
+    echo "    pm list, ls                      列出所有项目"
+    echo "    pm select                        使用 fzf 选择项目"
+    echo "    pm open <project-id>             打开项目（使用默认工具）"
+    echo "    pm start <project-id>            启动完整环境（tmux会话）"
+    echo "    pm add                           添加新项目"
+    echo "    pm add -i, --interactive         交互式添加项目"
+    echo "    pm edit <project-id>             编辑项目配置"
+    echo "    pm remove <project-id>           删除项目"
+    echo "    pm info <project-id>             显示项目详情"
+    echo "    pm search <query>                搜索项目"
+    echo ""
+    echo_c "  ${BOLD}环境管理:${NC}"
+    echo "    pm session list                  列出 tmux 会话"
+    echo "    pm session attach <name>         附加到会话"
+    echo "    pm session kill <name>           销毁会话"
+    echo ""
+    echo_c "  ${BOLD}配置管理:${NC}"
+    echo "    pm config                        编辑配置"
+    echo "    pm config init                   初始化配置"
+    echo "    pm preset list                   列出可用预设"
+    echo ""
+    echo_c "  ${BOLD}其他:${NC}"
+    echo "    pm help                          显示此帮助信息"
+    echo "    pm version                       显示版本信息"
+    echo "    pm info                          显示系统信息"
+    echo ""
+    echo_c "${BOLD}示例:${NC}"
+    echo "  pm                                 # 显示主菜单"
+    echo "  pm select                          # 使用 fzf 选择项目"
+    echo "  pm start my-app                    # 启动项目的完整环境"
+    echo "  pm add -i                          # 交互式添加项目"
+    echo "  pm search rust                     # 搜索包含 'rust' 的项目"
+    echo ""
+    echo_c "${BOLD}项目主页:${NC} https://github.com/Clearzero22/pm"
+    echo ""
 }
 
 # 显示主菜单
 pm_show_main_menu() {
     echo ""
-    echo "${BOLD}${CYAN}📦 Project Manager${NC}"
+    echo_c "${BOLD}${CYAN}📦 Project Manager${NC}"
     echo ""
-    
+
     # 如果有 fzf，使用 fzf 菜单
     if pm_has_fzf; then
         local choice=$(bash "$PROJECT_ROOT/ui/fzf-selector.sh" menu)
@@ -109,18 +123,18 @@ pm_show_main_menu() {
         esac
     else
         # 备用文本菜单
-        echo "${CYAN}1)${NC} 📂 打开项目"
-        echo "${CYAN}2)${NC} 📋 列出所有项目"
-        echo "${CYAN}3)${NC} ➕ 添加新项目"
-        echo "${CYAN}4)${NC} 🔍 搜索项目"
-        echo "${CYAN}5)${NC} 🗑️  删除项目"
-        echo "${CYAN}6)${NC} ⚙️  编辑配置"
-        echo "${CYAN}7)${NC} ℹ️  系统信息"
-        echo "${CYAN}0)${NC} 🚪 退出"
+        echo_c "${CYAN}1)${NC} 📂 打开项目"
+        echo_c "${CYAN}2)${NC} 📋 列出所有项目"
+        echo_c "${CYAN}3)${NC} ➕ 添加新项目"
+        echo_c "${CYAN}4)${NC} 🔍 搜索项目"
+        echo_c "${CYAN}5)${NC} 🗑️  删除项目"
+        echo_c "${CYAN}6)${NC} ⚙️  编辑配置"
+        echo_c "${CYAN}7)${NC} ℹ️  系统信息"
+        echo_c "${CYAN}0)${NC} 🚪 退出"
         echo ""
-        
+
         read -p "选择 [0-7]: " choice
-        
+
         case "$choice" in
             1) pm_select_and_open ;;
             2) pm_list_projects ;;
@@ -273,7 +287,7 @@ pm_list_projects() {
 # 显示统计信息
 pm_show_stats() {
     echo ""
-    echo "${CYAN}📊 统计信息${NC}"
+    echo_c "${CYAN}📊 统计信息${NC}"
     echo ""
     
     local total=$(pm_project_count)
@@ -292,7 +306,7 @@ pm_show_stats() {
 # 显示系统信息
 pm_show_info() {
     echo ""
-    echo "${CYAN}ℹ️  系统信息${NC}"
+    echo_c "${CYAN}ℹ️  系统信息${NC}"
     echo ""
     pm_platform_info
     echo ""
@@ -397,7 +411,7 @@ pm_main() {
             case "${1:-list}" in
                 list)
                     echo ""
-                    echo "${CYAN}📦 可用预设${NC}"
+                    echo_c "${CYAN}📦 可用预设${NC}"
                     echo ""
                     ls -1 "$PROJECT_ROOT/presets/" | sed 's/.yml$//' | sed 's/^/  /'
                     echo ""
