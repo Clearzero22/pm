@@ -1,13 +1,16 @@
-# Project Manager (pm)
+# PM - Project Manager
 
-> 一个统一的跨平台项目管理与启动工具，支持 Linux、macOS、Termux (Android) 和远程服务器。
+> 跨平台项目管理与启动工具 | 统一管理开发、学习、阅读项目
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/github-Clearzero22%2Fpm-brightgreen.svg)](https://github.com/Clearzero22/pm)
+
+---
 
 ## ✨ 特性
 
 - 📁 **统一管理** - 集中管理所有项目（开发/学习/阅读/研究）
-- 🚀 **快速启动** - 一键启动完整开发环境
+- 🚀 **快速启动** - 一键启动完整开发环境（编辑器 + AI + 终端）
 - 🖥️ **多会话** - 使用 tmux 管理多个项目会话
 - 🤖 **AI 集成** - 支持 Claude、Codex、Aider 等 AI 工具
 - 📱 **跨平台** - 支持 Linux、macOS、Termux、远程服务器
@@ -15,171 +18,159 @@
 - 🔍 **快速搜索** - 使用 fzf 快速查找项目
 - ⚡ **高效工作流** - 优化的开发体验
 
-## 📸 快速预览
+---
 
-### 主菜单
+## 🚀 5 分钟快速开始
 
-```
-$ pm
-
-1) 📂 打开项目（选择并进入）
-2) 📋 列出所有项目
-3) ➕ 添加新项目
-4) 🔍 搜索项目
-```
-
-### 项目选择（fzf）
-
-```
-💻 开发项目
-  [1] my-app-frontend    React前端开发       ~/projects/my-app/frontend
-  [2] backend-api         Go后端API           ~/projects/backend/api
-
-📚 学习项目
-  [3] rust-learning       Rust学习             ~/learning/rust
-
-📖 阅读项目
-  [4] book-deep-learning  深度学习书籍         ~/reading/books
-```
-
-### tmux 会话布局（AI 开发模式）
-
-```
-┌─────────────────────────────────┐
-│                                 │
-│         Zed 编辑器 (50%)         │
-│                                 │
-├───────────────────┬─────────────┤
-│    Claude (25%)   │  zsh (25%)  │
-│                   │             │
-└───────────────────┴─────────────┘
-```
-
-## 🚀 快速开始
-
-### 1. 安装依赖
-
-**必需依赖：**
-- `yq` - YAML 配置解析
-- `fzf` - 交互式选择器（推荐）
-- `tmux` - 会话管理（推荐）
-
-**Linux (Ubuntu/Debian):**
-```bash
-sudo apt update
-sudo apt install -y yq fzf tmux
-```
-
-**macOS:**
-```bash
-brew install yq fzf tmux
-```
-
-**Termux (Android):**
-```bash
-pkg update
-pkg install -y yq fzf tmux
-```
-
-### 2. 安装 pm
+### 1. 安装
 
 ```bash
-# 克隆项目
-git clone <your-repo-url>
-cd pm-project-manager
-
-# 创建软链接
-ln -s $(pwd)/pm ~/bin/pm
+# 克隆仓库
+git clone https://github.com/Clearzero22/pm.git ~/.pm
+cd ~/.pm
 
 # 添加到 PATH
-export PATH="\$PATH:~/bin"
+echo 'export PATH="$HOME/.pm:$PATH"' >> ~/.zshrc
+source ~/.zshrc
 ```
 
-### 3. 初始化配置
+### 2. 初始化
 
 ```bash
 pm config init
 ```
 
-### 4. 添加第一个项目
+### 3. 添加项目
 
 ```bash
-pm add -i
-# 或
-pm add my-app "My App" "~/projects/my-app" development "React应用" dev-ai
+pm add my-app ~/projects/my-app "我的应用" development
 ```
 
-### 5. 开始使用
+### 4. 启动项目
 
 ```bash
-# 显示主菜单
-pm
-
-# 使用 fzf 选择项目
-pm select
-
-# 启动完整环境
 pm start my-app
 ```
 
-## 📖 文档
+---
 
-- **[使用指南](docs/usage.md)** - 完整的使用文档，覆盖所有功能
-- **[开发文档](docs/development.md)** - 架构设计和开发指南
-- **[预设说明](docs/presets.md)** - 预设模板详解和自定义方法
-- **[tmux 指南](docs/tmux-guide.md)** - tmux 高级用法和最佳实践
-- **[Termux 设置](docs/termux-setup.md)** - Termux 环境配置和使用技巧
+## 📖 完整文档
 
-## 🎯 核心功能
+| 文档 | 说明 |
+|------|------|
+| **[快速开始](docs/QUICKSTART.md)** | 5 分钟上手指南 |
+| **[命令参考](docs/COMMANDS.md)** | 所有命令完整说明 |
+| **[配置详解](docs/CONFIGURATION.md)** | 配置文件和选项 |
+| **[多平台同步](docs/MULTIPLATFORM.md)** | 跨设备配置同步 |
+| **[常见问题](docs/FAQ.md)** | 问题排查和解决 |
 
-### 项目管理
+---
 
-```bash
-pm list                    # 列出所有项目
-pm select                  # 使用 fzf 选择项目
-pm open <project-id>       # 打开项目
-pm start <project-id>      # 启动完整环境
-pm add                     # 添加新项目
-pm remove <project-id>    # 删除项目
-pm search <query>         # 搜索项目
+## 📸 预览
+
+### 主菜单（fzf）
+
+```
+💻 开发项目
+  [1] my-app-frontend    React前端       ~/projects/my-app
+  [2] backend-api         Go后端API       ~/projects/backend
+
+📚 学习项目
+  [3] rust-learning       Rust学习        ~/learning/rust
 ```
 
-### 会话管理
+### tmux 布局（AI 开发模式）
 
-```bash
-pm session list           # 列出 tmux 会话
-pm session attach <name>  # 附加到会话
-pm session kill <name>    # 销毁会话
+```
+┌─────────────────────────────────┐
+│                                 │
+│         编辑器 (50%)             │
+│                                 │
+├───────────────────┬─────────────┤
+│    AI (25%)       │  zsh (25%)  │
+│                   │             │
+└───────────────────┴─────────────┘
 ```
 
-### 配置管理
+---
+
+## 💻 核心命令
 
 ```bash
-pm config                 # 编辑配置
-pm config init            # 初始化配置
-pm preset list            # 列出可用预设
+# 项目管理
+pm list                  # 列出所有项目
+pm add -i               # 交互式添加
+pm open <project-id>     # 打开项目
+pm start <project-id>    # 启动完整环境
+pm search <query>       # 搜索项目
+
+# 会话管理
+pm session list         # 列出 tmux 会话
+pm session attach       # 附加到会话
+
+# 配置管理
+pm config               # 编辑配置
+pm preset list          # 列出预设
 ```
+
+---
 
 ## 📦 预设模板
 
-| 预设 | 用途 | 布局 |
-|------|------|------|
-| `dev-ai` | AI 辅助开发 | 编辑器 + AI + 终端 |
-| `dev-standard` | 标准开发 | 编辑器 + 终端 |
-| `learning` | 学习笔记 | 编辑器 + 终端 |
-| `reading` | 阅读文档 | 文件查看 + 终端 |
+| 预设 | 布局 | 适用场景 |
+|------|------|----------|
+| `dev-ai` | 编辑器 + AI + 终端 | AI 辅助开发 |
+| `dev-standard` | 编辑器 + 终端 | 标准开发 |
+| `learning` | 笔记 + 终端 | 学习/研究 |
+| `reading` | 文件列表 + 终端 | 阅读文档 |
 
-## 🏗️ 目录结构
+---
+
+## 🌟 使用场景
+
+### 日常开发
+
+```bash
+# 添加工作项目
+pm add work-api ~/work/api "工作API" development
+
+# 启动 AI 辅助开发环境
+pm start work-api --preset dev-ai
+```
+
+### 学习新技术
+
+```bash
+# 添加学习项目
+pm add learn-rust ~/learn/rust "Rust学习" learning
+
+# 启动学习环境
+pm start learn-rust --preset learning
+```
+
+### 跨平台同步
+
+```bash
+# 使用 Git 同步配置
+git clone https://github.com/yourusername/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles && bash install.sh
+```
+
+详见 [多平台同步指南](docs/MULTIPLATFORM.md)
+
+---
+
+## 🏗️ 项目结构
 
 ```
-pm-project-manager/
+pm/
 ├── pm                      # 主入口脚本
 ├── install.sh              # 安装脚本
-├── core/                   # 核心引擎
+├── core/                   # 核心模块
 │   ├── platform.sh         # 平台检测
 │   ├── config.sh           # 配置管理
 │   ├── project-registry.sh # 项目注册表
-│   └── tmux-manager.sh     # tmux 会话管理
+│   └── tmux-manager.sh     # tmux 管理
 ├── ui/                     # 用户界面
 │   └── fzf-selector.sh     # fzf 选择器
 ├── presets/                # 预设模板
@@ -187,125 +178,89 @@ pm-project-manager/
 │   ├── dev-standard.yml
 │   ├── learning.yml
 │   └── reading.yml
-├── config/                 # 配置文件目录
-│   ├── projects.yaml
-│   └── tools.yaml
-├── docs/                   # 文档
-│   ├── usage.md
-│   ├── development.md
-│   ├── presets.md
-│   ├── tmux-guide.md
-│   └── termux-setup.md
-└── README.md
+└── docs/                   # 文档
+    ├── QUICKSTART.md
+    ├── COMMANDS.md
+    ├── CONFIGURATION.md
+    ├── MULTIPLATFORM.md
+    └── FAQ.md
 ```
 
-## 💡 使用场景
+---
 
-### 日常开发
+## 🔧 配置示例
 
-```bash
-# 1. 添加项目
-pm add my-api "API服务" "~/projects/my-api" development "Go API" dev-ai
-
-# 2. 启动开发环境（自动创建 tmux 会话）
-pm start my-api
-
-# 3. 在 AI 窗格中询问问题，编辑器中编写代码，终端中运行测试
-```
-
-### 学习新语言
-
-```bash
-# 添加学习项目
-pm add rust-learning "Rust学习" "~/learning/rust" learning "学习Rust" learning
-
-# 启动学习环境
-pm start rust-learning
-```
-
-### 多项目管理
-
-```bash
-# 快速切换项目
-pm 1  # 开发项目
-pm 2  # 学习项目
-pm 3  # 阅读项目
-
-# 查看 tmux 会话
-pm session list
-```
-
-### 远程开发
-
-```bash
-# 在服务器上添加项目
-pm add remote-app "Remote App" "~/projects/remote-app" development "远程开发" dev-standard
-
-# 启动会话
-pm start remote-app
-
-# 从本地 SSH 连接
-ssh user@server -t tmux attach -t pm-remote-app
-```
-
-## 🌟 高级特性
-
-### 自定义预设
-
-在 `presets/` 目录中创建自定义预设 YAML 文件：
+### 项目配置 (~/.pm/projects.yaml)
 
 ```yaml
-name: "我的预设"
-description: "自定义布局"
-layout: "tiled"
+categories:
+  - id: "development"
+    name: "开发项目"
+    icon: "💻"
 
-panes:
-  - name: "editor"
-    type: "editor"
-    tool: "zed"
-    size: "50%"
-    position: "left"
+projects:
+  - id: my-app
+    name: 我的应用
+    path: "$HOME/projects/my-app"
+    category: development
+    tools:
+      editor: nvim
+      terminal: zsh
+      ai: claude
+    preset: dev-ai
 ```
 
-### 工具链配置
-
-在 `~/.pm/tools.yaml` 中配置自定义工具：
+### 工具配置 (~/.pm/tools.yaml)
 
 ```yaml
 editors:
-  my-editor:
-    command: "my-editor"
-    args: ["--project-dir", "."]
+  nvim:
+    command: nvim
+    gui: false
+  code:
+    command: code
     gui: true
+
+ai_tools:
+  claude:
+    command: claude
+  aider:
+    command: aider
 ```
 
-### 平台适配
-
-pm 自动检测平台并适配：
-- **Linux/macOS** - 完整功能，支持 GUI 编辑器
-- **Termux** - 无 GUI，自动使用终端编辑器
-- **远程服务器** - 终端模式，使用 nvim/vim
+---
 
 ## 🤝 贡献
 
-欢迎贡献！请遵循以下步骤：
+欢迎贡献！请查看 [开发文档](docs/development.md)
 
-1. Fork 本项目
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 提交 Pull Request
+1. Fork 项目
+2. 创建分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add AmazingFeature'`)
+4. 推送分支 (`git push origin feature/AmazingFeature`)
+5. 创建 Pull Request
+
+---
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
+MIT License - 详见 [LICENSE](LICENSE)
 
-## 📧 联系方式
-
-如有问题或建议，请提交 Issue 或 Pull Request。
+---
 
 ## 🙏 致谢
 
 - [yq](https://github.com/mikefarah/yq) - YAML 处理
 - [fzf](https://github.com/junegunn/fzf) - 命令行模糊查找器
 - [tmux](https://github.com/tmux/tmux) - 终端复用器
+
+---
+
+## 📧 联系方式
+
+- GitHub: [Clearzero22/pm](https://github.com/Clearzero22/pm)
+- Issues: [提交问题](https://github.com/Clearzero22/pm/issues)
+
+---
+
+**⭐ 如果这个项目对你有帮助，请给个 Star！**
