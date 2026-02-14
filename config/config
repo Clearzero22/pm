@@ -1,0 +1,137 @@
+# This is the configuration file for Ghostty.
+#
+# This template file has been automatically created at the following
+# path since Ghostty couldn't find any existing config files on your system:
+#
+#   /home/clearzero22/.config/ghostty/config
+#
+# The template does not set any default options, since Ghostty ships
+# with sensible defaults for all options. Users should only need to set
+# options that they want to change from the default.
+#
+# Run `ghostty +show-config --default --docs` to view a list of
+# all available config options and their default values.
+#
+# Additionally, each config option is also explained in detail
+# on Ghostty's website, at https://ghostty.org/docs/config.
+#
+# Ghostty can reload the configuration while running by using the menu
+# options or the bound key (default: Command + Shift + comma on macOS and
+# Control + Shift + comma on other platforms). Not all config options can be
+# reloaded while running; some only apply to new windows and others may require
+# a full restart to take effect.
+
+# Config syntax crash course
+# ==========================
+# # The config file consists of simple key-value pairs,
+# # separated by equals signs.
+# font-family = Iosevka
+# window-padding-x = 2
+#
+# # Spacing around the equals sign does not matter.
+# # All of these are identical:
+# key=value
+# key= value
+# key =value
+# key = value
+#
+# # Any line beginning with a # is a comment. It's not possible to put
+# # a comment after a config option, since it would be interpreted as a
+# # part of the value. For example, this will have a value of "#123abc":
+# background = #123abc
+#
+# # Empty values are used to reset config keys to default.
+# key =
+#
+# # Some config options have unique syntaxes for their value,
+# # which is explained in the docs for that config option.
+# # Just for example:
+# resize-overlay-duration = 4s 200ms
+# configuration themes
+
+#  photo_2025-08-21_15-51-30.jpg   photo_2025-09-04_12-03-15.jpg
+#  photo_2025-08-23_19-47-05.jpg   photo_2025-09-04_13-57-56.jpg
+#  photo_2025-08-28_11-55-45.jpg   photo_2025-09-04_13-58-02.jpg
+#  photo_2025-08-28_13-07-39.jpg   photo_2025-09-04_13-58-08.jpg
+#  photo_2025-08-28_19-49-28.jpg  'photo_2025-09-10_17-02-09 (2).jpg'
+#  photo_2025-09-02_14-56-22.jpg   photo_2025-09-10_17-02-09.jpg
+
+
+# theme = Borland
+
+
+
+
+# background-image = /home/clearzero22/Pictures/girls/photo_2025-08-21_15-51-30.jpg
+# background-image = /home/clearzero22/Pictures/girls/photo_2025-08-28_19-49-28.jpg
+
+# background-image = /home/clearzero22/Pictures/girls/002.png
+
+# background-image = /home/clearzero22/Downloads/Black_static.png
+background-image-opacity = 1
+# background-image-fit = cover
+
+
+# configuration vim style to move split tabs 创建tab split 的页面
+#keybind = ctrl+h=goto_split:left
+#keybind = ctrl+j=goto_split:down
+#keybind = ctrl+k=goto_split:up
+#keybind = ctrl+l=goto_split:right
+
+# 关闭当前焦点的split
+keybind = ctrl+w=close_surface
+
+# next/previous 按创建顺寻循环
+keybind = ctrl+n=goto_split:next
+keybind = ctrl+p=goto_split:previous
+
+# 支持上下左右全方向可以自己绑定快捷键
+# new split 
+# 支持上下左右方向自己绑定 ctrl + shift + 方向键
+
+keybind = ctrl+shift+left=new_split:left
+keybind = ctrl+shift+right=new_split:right
+keybind = ctrl+shift+up=new_split:up
+keybind = ctrl+shift+down=new_split:down
+
+# 放大缩小当前的split alt +  
+keybind = alt+left=resize_split:left,20
+keybind = alt+right=resize_split:right,20
+
+# 快速切换tab页面 ctrl + [ ]
+keybind = ctrl+left_bracket=previous_tab
+keybind = ctrl+right_bracket=next_tab
+
+
+# 移动tab位置 ctrl + shift + [ ]
+keybind = ctrl+shift+left_bracket=move_tab:-1
+keybind = ctrl+shift+right_bracket=move_tab:+1
+
+# ctrl + f 打开查找 not work
+#keybind = ctrl+f=toggle_search
+
+# ctrl + shift + j (实现将)
+
+#theme = Gruvbox Light
+
+#theme = 3024 Night
+
+#theme = Alabaster
+
+#theme = Borland
+
+#theme = Coffee Theme
+
+#theme = Django
+
+#theme = Django Smooth
+
+#theme = Fahrenheit
+
+theme = Grass
+
+
+
+
+
+

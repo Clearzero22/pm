@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ghostty:*)",
+      "Bash(mkdir:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "/home/clearzero22/Downloads"
+    ]
+  }
+}
