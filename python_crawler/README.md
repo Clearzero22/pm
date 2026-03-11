@@ -177,6 +177,45 @@ A: 使用 `--headless` 模式，减少 `--products` 数量，或调整暂停时�
 **Q: 抓取会被封吗？**
 A: 本爬虫已加入人类行为模拟，但仍建议控制抓取频率，避免大量并发请求。
 
+---
+
+## 📊 数据可视化仪表盘
+
+### 快速启动
+
+```bash
+# 使用启动脚本（推荐）
+bash run_dashboard.sh
+
+# 或手动启动
+source .venv-dashboard/bin/activate
+streamlit run dashboard/app.py
+```
+
+访问: http://localhost:8501
+
+### 仪表盘功能
+
+| 功能 | 描述 |
+|------|------|
+| 📊 **价格分析** | 价格分布直方图、价格区间饼图 |
+| ⭐ **评分分析** | 评分箱线图、评分区间统计 |
+| 🎨 **变体分析** | 变体分类分布、变体TOP榜单 |
+| 🎯 **选品建议** | 高评分低价机会、风险商品提醒 |
+| 🔍 **数据筛选** | 价格、评分、变体分类过滤 |
+| 📋 **原始数据** | 完整数据表格查看 |
+
+### 更新数据
+
+```bash
+# 1. 运行爬虫抓取新数据
+uv run python main.py --pages 2 --products 20
+
+# 2. 刷新仪表盘页面（浏览器按 R 键或 F5）
+```
+
+详细文档请查看: [dashboard/README.md](dashboard/README.md)
+
 ## License
 
 MIT

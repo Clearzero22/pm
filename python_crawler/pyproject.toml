@@ -11,6 +11,10 @@ dependencies = [
 
 [project.scripts]
 crawl = "main:main"
+dashboard = "dashboard:main"
 
 [dependency-groups]
-dev = []
+dev = [
+    "streamlit>=1.31.0",
+    "plotly>=5.18.0",
+]
