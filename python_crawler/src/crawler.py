@@ -60,11 +60,33 @@ class AmazonCrawler:
         logger.info("=" * 60)
 
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=self.headless)
+            # Launch browser with maximized window
+            browser = p.chromium.launch(
+                headless=self.headless,
+                args=['--start-maximized']
+            )
+            # Get screen size and set viewport accordingly
             context = browser.new_context(
+                viewport={'width': 2560, 'height': 1440},  # 2K resolution
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
             )
             page = context.new_page()
+
+            # Inject responsive script to handle window resize
+            page.add_init_script("""
+                // Make page fully responsive
+                window.addEventListener('resize', function() {
+                    document.body.style.width = '100%';
+                    document.body.style.height = '100%';
+                });
+
+                // Set initial responsive styles
+                document.addEventListener('DOMContentLoaded', function() {
+                    document.body.style.width = '100%';
+                    document.body.style.height = '100%';
+                    document.body.style.overflowX = 'hidden';
+                });
+            """)
 
             for page_num in range(1, self.max_pages + 1):
                 url = f"{self.BASE_URL}?pg={page_num}" if page_num > 1 else self.BASE_URL
@@ -107,6 +129,9 @@ class AmazonCrawler:
             # Navigate to listing page
             logger.debug(f"    Loading: {url}")
             page.goto(url, timeout=30000, wait_until="domcontentloaded")
+
+            # Force responsive layout after navigation
+            self._ensure_responsive_layout(page)
 
             # Wait for page to settle
             self._human_pause(3, 5)
@@ -177,6 +202,9 @@ class AmazonCrawler:
 
                 # Wait for navigation
                 page.wait_for_load_state("domcontentloaded", timeout=10000)
+
+                # Force responsive layout
+                self._ensure_responsive_layout(page)
                 self._human_pause(2, 3)
 
                 # Extract product details
@@ -188,6 +216,30 @@ class AmazonCrawler:
             logger.warning(f"      Error extracting details: {e}")
 
         return None
+
+    def _ensure_responsive_layout(self, page: Page):
+        """Force responsive layout after page navigation.
+
+        Args:
+            page: Playwright Page object
+        """
+        try:
+            # Get current window size
+            size = page.viewport_size
+            if size:
+                page.set_viewport_size({"width": size["width"], "height": size["height"]})
+
+            # Force body to be responsive
+            page.evaluate("""
+                () => {
+                    document.body.style.width = '100%';
+                    document.body.style.maxWidth = '100%';
+                    document.body.style.overflowX = 'hidden';
+                    window.dispatchEvent(new Event('resize'));
+                }
+            """)
+        except Exception as e:
+            logger.debug(f"      Responsive layout adjustment: {e}")
 
     def _human_pause(self, min_sec: float, max_sec: float):
         """Pause for a random duration to simulate human behavior.
