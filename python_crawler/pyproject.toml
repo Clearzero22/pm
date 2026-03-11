@@ -1,0 +1,16 @@
+[project]
+name = "amazon-crawler"
+version = "0.1.0"
+description = "Amazon Best Sellers crawler using Playwright"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "pandas>=3.0.1",
+    "playwright>=1.58.0",
+]
+
+[project.scripts]
+crawl = "main:main"
+
+[dependency-groups]
+dev = []
