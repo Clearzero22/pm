@@ -164,3 +164,135 @@
 - [ ] 支持断点续传
 - [ ] 添加数据验证
 - [ ] 图片下载到本地
+
+
+---
+
+## 自动化选品功能
+
+### Phase 1: 核心算法
+
+- [ ] 创建 `src/selection/` 模块目录
+- [ ] 实现配置文件 (`config.py`)
+- [ ] 实现评分引擎 (`scorer.py`)
+  - [ ] 多维度评分逻辑
+  - [ ] 权重配置
+  - [ ] 评分计算
+- [ ] 实现风险评估器 (`risk_assessor.py`)
+  - [ ] 积极信号检测
+  - [ ] 风险信号检测
+  - [ ] 风险等级判定
+- [ ] 实现自动选品器 (`selector.py`)
+  - [ ] 数据过滤
+  - [ ] 综合排序
+  - [ ] 报告生成
+
+### Phase 2: 定时任务
+
+- [ ] 实现调度器 (`scheduler.py`)
+  - [ ] 定时爬取
+  - [ ] 自动选品
+  - [ ] 结果通知
+
+### Phase 3: 仪表盘集成
+
+- [ ] 添加智能选品 Tab
+- [ ] 参数配置面板
+- [ ] 结果可视化展示
+
+### 相关文档
+
+- [x] `AUTO_SELECTION_GUIDE.md` - 自动化选品实现指南
+
+---
+
+## 飞书多维表格集成
+
+### Phase 1: API 封装
+
+- [ ] 创建 `src/feishu/` 模块目录
+- [ ] 创建配置文件结构 (`config/feishu_config.yaml`)
+- [ ] 实现 API 客户端 (`client.py`)
+  - [ ] 认证与 Token 管理
+  - [ ] API 请求封装
+  - [ ] 错误处理与重试
+- [ ] 实现字段映射器 (`mapper.py`)
+  - [ ] CSV 到飞书字段映射
+  - [ ] 类型转换
+- [ ] 实现多维表格同步器 (`bitable.py`)
+  - [ ] 批量创建记录
+  - [ ] 批量更新记录
+  - [ ] Upsert 逻辑
+
+### Phase 2: 集成
+
+- [ ] 修改爬虫支持飞书同步
+- [ ] 添加命令行参数 `--sync-feishu`
+- [ ] 创建独立同步脚本 `sync_to_feishu.py`
+- [ ] 集成到定时任务
+
+### 飞书配置
+
+- [ ] 创建飞书应用
+- [ ] 配置多维表格权限
+- [ ] 创建商品主表
+- [ ] 创建选品推荐表
+- [ ] 创建同步日志表
+
+### 相关文档
+
+- [x] `FEISHU_INTEGRATION_GUIDE.md` - 飞书多维表格集成指南
+
+---
+
+## 2026-03-12 (Continued)
+
+### ✅ 数据可视化仪表盘
+
+- [x] 创建 `dashboard/app.py` - Streamlit 数据分析仪表盘
+  - 📊 价格分析：直方图、饼图
+  - ⭐ 评分分析：箱线图、区间统计
+  - 🎨 变体分析：分布、TOP榜单
+  - 🎯 选品建议：高评分低价机会、风险提醒
+  - 🖼️ 图片展示：商品图片画廊
+  - 📋 数据表格：完整数据查看
+- [x] 创建独立虚拟环境 `.venv-dashboard`（解决 pandas 版本冲突）
+- [x] 创建 `run_dashboard.sh` 启动脚本
+- [x] 修复多个 bug：缩进错误、图片URL分割、颜色序列等
+- [x] Commit: `63c391b` - feat: add Streamlit data visualization dashboard
+
+### ✅ 关键词搜索功能（方案B）
+
+- [x] 创建 `src/search_crawler.py` - 独立搜索爬虫类
+  - 支持关键词搜索（URL 编码）
+  - 5种排序方式：relevance, price-asc, price-desc, review-rank, date-desc
+  - 可选类别过滤
+  - 自动生成输出文件名
+- [x] 更新 `main.py` 添加搜索模式 CLI 参数
+  - `--search KEYWORD` - 启用搜索模式
+  - `--sort` - 排序方式
+  - `--category` - 类别过滤
+- [x] 创建 `test_search.py` 测试脚本
+- [x] 修复搜索爬虫导航逻辑
+  - 问题：点击搜索结果链接失败（选择器不匹配）
+  - 解决：改为直接构造商品URL导航 `https://www.amazon.com/dp/{ASIN}`
+- [x] 修复依赖冲突（移除 dev 依赖组中的 streamlit）
+- [x] 测试验证：成功搜索 "water bottle" 提取 3 个商品
+- [x] Commit: `f2e158a` - feat: add Amazon keyword search crawler (Plan B)
+- [x] Commit: `09eda7b` - fix: improve search crawler with direct navigation method
+
+### 新增 CLI 使用示例
+
+```bash
+# 基础搜索
+uv run python main.py --search "water bottle"
+
+# 按评分排序
+uv run python main.py --search "blender" --sort review-rank
+
+# 按价格从低到高
+uv run python main.py --search "coffee maker" --sort price-asc
+
+# 组合参数
+uv run python main.py --search "mouse" --category electronics --pages 2 --products 15
+```
