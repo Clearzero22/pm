@@ -1,7 +1,7 @@
 [project]
 name = "amazon-crawler"
 version = "0.1.0"
-description = "Amazon Best Sellers crawler using Playwright"
+description = "Amazon crawler using Playwright - Best Sellers & Keyword Search"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
@@ -12,9 +12,3 @@ dependencies = [
 [project.scripts]
 crawl = "main:main"
 dashboard = "dashboard:main"
-
-[dependency-groups]
-dev = [
-    "streamlit>=1.31.0",
-    "plotly>=5.18.0",
-]

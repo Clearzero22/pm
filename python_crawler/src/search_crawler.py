@@ -177,46 +177,95 @@ class AmazonSearchCrawler:
             self._ensure_responsive_layout(page)
             self._human_pause(3, 5)
 
-            # Search page uses different selectors
-            # Try multiple possible selectors for product cards
-            product_cards = self._find_product_cards(page)
+            # Collect ASINs from search results (don't click yet)
+            asins = self._collect_asins_from_search(page)
 
-            if not product_cards:
-                logger.warning("    No product cards found. Page structure may have changed.")
+            if not asins:
+                logger.warning("    No ASINs found on search page.")
                 return products
 
-            logger.info(f"    Found {len(product_cards)} product cards")
+            logger.info(f"    Found {len(asins)} products")
 
-            cards_to_process = min(len(product_cards), self.max_products)
-            logger.info(f"    Processing {cards_to_process} products...")
+            # Process limited number of products
+            asins_to_process = asins[:self.max_products]
+            logger.info(f"    Processing {len(asins_to_process)} products...")
 
-            for idx in range(cards_to_process):
-                card = product_cards[idx]
+            for idx, asin in enumerate(asins_to_process):
+                logger.info(f"\n    [{idx + 1}/{len(asins_to_process)}] ASIN: {asin}")
 
-                asin = card.get_attribute("data-asin")
-                if not asin:
-                    # Try to extract ASIN from link
-                    asin = self._extract_asin_from_card(card)
-                    if not asin:
-                        logger.debug(f"      [{idx + 1}] No ASIN found, skipping")
-                        continue
-
-                logger.info(f"\n    [{idx + 1}/{cards_to_process}] ASIN: {asin}")
-
-                product = self._extract_product_details(page, card, asin, idx + 1)
+                # Navigate directly to product page (more reliable than clicking)
+                product = self._extract_product_by_asin(page, asin, idx + 1)
                 if product:
                     products.append(product)
 
-                # Go back to search results
-                if page.url != url:
-                    page.go_back()
-                    self._human_pause(1, 2)
-                    product_cards = self._find_product_cards(page)
-
         except Exception as e:
             logger.error(f"    Error crawling search page: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
 
         return products
+
+    def _collect_asins_from_search(self, page: Page) -> list[str]:
+        """Collect all ASINs from search results page.
+
+        Args:
+            page: Playwright Page object
+
+        Returns:
+            List of ASIN strings
+        """
+        asins = []
+
+        # Get all elements with data-asin attribute
+        try:
+            cards = page.locator("[data-asin]").all()
+            for card in cards:
+                asin = card.get_attribute("data-asin")
+                if asin and len(asin) == 10:  # Valid ASIN length
+                    # Skip obvious ads (Sponsored items often have specific classes)
+                    parent = card.evaluate("el => el.parentElement?.className || ''")
+                    if "AdHolder" not in parent:
+                        asins.append(asin)
+        except Exception as e:
+            logger.debug(f"    Error collecting ASINs: {e}")
+
+        return asins
+
+    def _extract_product_by_asin(self, page: Page, asin: str, index: int) -> dict | None:
+        """Extract product details by navigating directly to product page.
+
+        Args:
+            page: Playwright Page object
+            asin: Product ASIN
+            index: Product index for logging
+
+        Returns:
+            Product data dict or None
+        """
+        try:
+            # Construct product URL directly
+            product_url = f"https://www.amazon.com/dp/{asin}"
+
+            logger.debug(f"      Navigating to: {product_url}")
+            page.goto(product_url, timeout=30000, wait_until="domcontentloaded")
+
+            self._ensure_responsive_layout(page)
+            self._human_pause(2, 3)
+
+            logger.debug(f"      Parsing product detail...")
+            product = parse_product_detail(page, asin)
+
+            if product:
+                product["search_keyword"] = self.keyword
+                logger.debug(f"      ✓ Product extracted: {product.get('title', 'N/A')[:50]}...")
+                return product
+            else:
+                logger.warning(f"      parse_product_detail returned None")
+
+        except Exception as e:
+            logger.warning(f"      Error extracting product {asin}: {e}")
+
+        return None
 
     def _find_product_cards(self, page: Page) -> list:
         """Find product cards using multiple possible selectors.
@@ -283,31 +332,59 @@ class AmazonSearchCrawler:
         Returns:
             Product data dict or None
         """
+        search_url = page.url
         try:
             card.scroll_into_view_if_needed()
             self._human_pause(0.5, 1)
 
-            # Find and click product link
-            link = card.locator("h2 a").first
-            if link.count() == 0:
-                link = card.locator("a[href*='/dp/']").first
+            # Try multiple selectors for product link (search page has different structure)
+            link_selectors = [
+                "h2 a",                                    # Title link (most common)
+                "a[href*='/dp/']",                         # Direct product link
+                "[data-cy='title-recipe-title'] a",        # New Amazon layout
+                ".s-link-inherit-style",                   # Alternative link style
+                ".a-link-normal",                          # Standard Amazon link
+            ]
 
-            if link.count() > 0:
+            link = None
+            for selector in link_selectors:
+                try:
+                    test_link = card.locator(selector).first
+                    if test_link.count() > 0:
+                        href = test_link.get_attribute("href") or ""
+                        # Make sure it's a product link (contains /dp/)
+                        if "/dp/" in href:
+                            link = test_link
+                            logger.debug(f"      Using selector: {selector}")
+                            break
+                except Exception:
+                    continue
+
+            if link:
+                logger.debug(f"      Clicking product link...")
                 link.click(timeout=5000)
                 page.wait_for_load_state("domcontentloaded", timeout=10000)
 
                 self._ensure_responsive_layout(page)
                 self._human_pause(2, 3)
 
+                logger.debug(f"      Parsing product detail...")
                 product = parse_product_detail(page, asin)
                 # Add search metadata
                 if product:
                     product["search_keyword"] = self.keyword
+                    logger.debug(f"      ✓ Product extracted: {product.get('title', 'N/A')[:50]}...")
+                else:
+                    logger.warning(f"      parse_product_detail returned None")
 
                 return product
+            else:
+                logger.warning(f"      No product link found in card")
 
         except Exception as e:
             logger.warning(f"      Error extracting details: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
 
         return None
 
