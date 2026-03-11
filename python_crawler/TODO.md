@@ -296,3 +296,45 @@ uv run python main.py --search "coffee maker" --sort price-asc
 # 组合参数
 uv run python main.py --search "mouse" --category electronics --pages 2 --products 15
 ```
+
+---
+
+### ✅ 并行爬虫实现
+
+- [x] 创建 `test_parallel_tabs.py` - 并行标签页测试脚本
+  - 测试1: 单浏览器多标签页 (4个)
+  - 测试2: 多浏览器上下文 (5个)
+  - 测试3: 打开20个标签页
+  - 测试4: 并行导航性能测试
+- [x] 创建 `parallel_crawler.py` - 真正的并行爬虫实现
+  - 多进程工作进程 (ProcessPoolExecutor)
+  - 多窗口爬虫类 (MultiWindowCrawler)
+  - 任务分配和结果收集
+  - 支持大规模并行 (5窗口 x 5标签 = 25任务)
+- [x] 测试验证: 3窗口 x 3标签 = 9个任务全部成功
+- [x] Commit: `79b5837` - feat: add parallel tabs test suite
+
+### 并行架构
+
+```python
+# 方案A: 多进程池
+ProcessPoolExecutor(workers=3)
+├── Worker 1 → Browser → 3 Keywords
+├── Worker 2 → Browser → 3 Keywords
+└── Worker 3 → Browser → 3 Keywords
+
+# 方案B: 多窗口爬虫
+MultiWindowCrawler(windows=3, tabs_per_window=3)
+├── Window 1 → Browser → 3 Tabs
+├── Window 2 → Browser → 3 Tabs
+└── Window 3 → Browser → 3 Tabs
+```
+
+### 测试结果
+
+```
+✓ 3个浏览器窗口同时运行
+✓ 每个窗口3个标签页
+✓ 总计9个任务，成功率100%
+✓ 耗时 ~17秒（串行需要 ~45秒）
+```
