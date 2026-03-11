@@ -235,6 +235,153 @@ def extract_rating(page) -> str:
     return "N/A"
 
 
+def extract_variants(page) -> dict[str, Any]:
+    """Extract product variants (color, size, capacity, etc.).
+
+    Args:
+        page: Playwright Page object
+
+    Returns:
+        Dictionary with variant information
+    """
+    variants = {
+        "color_variants": [],
+        "size_variants": [],
+        "other_variants": [],
+        "total_variants": 0,
+        "variant_types": [],
+    }
+
+    try:
+        # Scroll to top to see variant selectors
+        page.evaluate("window.scrollTo(0, 0)")
+        page.wait_for_timeout(500)
+
+        # Amazon's inline-twister pattern (most common for current pages)
+        twister_selectors = [
+            ("#inline-twister-row-color_name", "color"),
+            ("#inline-twister-row-size_name", "size"),
+            ("#inline-twister-row-capacity", "capacity"),
+            ("#inline-twister-row-style_name", "style"),
+            ("#inline-twister-row-scent", "scent"),
+            ("#inline-twister-row-pattern_type", "pattern"),
+        ]
+
+        # Standard variation pattern (older pages)
+        standard_selectors = [
+            ("#variation_color_name", "color"),
+            ("#variation_size_name", "size"),
+            ("#variation_capacity", "capacity"),
+        ]
+
+        all_patterns = twister_selectors + standard_selectors
+
+        for selector, variant_type_key in all_patterns:
+            try:
+                variant_row = page.locator(selector).first
+                if variant_row.count() == 0:
+                    continue
+
+                # Get the variant type label
+                label_el = variant_row.locator(".dimensionText, .a-row, span").first
+                variant_type = label_el.text_content(timeout=500) or ""
+                variant_type = variant_type.replace(":", "").strip()
+                if not variant_type:
+                    variant_type = variant_type_key.title()
+
+                # Look for expander content which contains all options
+                expander_id = selector.replace("-row-", "-expander-content-")
+                expander = page.locator(f"#{expander_id}").first
+
+                # Also check within the row itself
+                options = []
+
+                # Try to find clickable options within expander
+                option_selectors = [
+                    f"{expander_id} li[class*='swatch']",
+                    f"{expander_id} .image-swatch-button-with-slots",
+                    f"{expander_id} .swatchElement",
+                    f"{selector} li",
+                    f"{selector} [class*='swatch']",
+                ]
+
+                for opt_sel in option_selectors:
+                    try:
+                        option_elements = page.locator(opt_sel).all()
+                        if len(option_elements) > 1:
+                            for opt in option_elements:
+                                try:
+                                    # Get option name
+                                    opt_text = opt.text_content(timeout=500) or ""
+                                    opt_text = opt_text.strip()
+
+                                    # Filter out non-variant text
+                                    if not opt_text or len(opt_text) > 50:
+                                        continue
+                                    if "selection" in opt_text.lower():
+                                        continue
+
+                                    # Check availability via class
+                                    opt_class = opt.get_attribute("class") or ""
+                                    is_available = "unavailable" not in opt_class.lower()
+
+                                    # Try to get ASIN from various attributes
+                                    opt_asin = (
+                                        opt.get_attribute("data-dp-url") or
+                                        opt.get_attribute("data-asin") or
+                                        opt.get_attribute("href") or
+                                        ""
+                                    )
+                                    if opt_asin and "/dp/" in opt_asin:
+                                        opt_asin = opt_asin.split("/dp/")[1].split("/")[0].split("?")[0]
+
+                                    if opt_text:
+                                        options.append({
+                                            "name": opt_text,
+                                            "available": is_available,
+                                            "asin": opt_asin,
+                                        })
+                                except:
+                                    continue
+
+                            if options:
+                                break
+                    except:
+                        continue
+
+                # Categorize variants
+                if options:
+                    variant_key_lower = variant_type_key.lower()
+                    if "color" in variant_key_lower or "colour" in variant_key_lower:
+                        variants["color_variants"] = options
+                    elif "size" in variant_key_lower:
+                        variants["size_variants"] = options
+                    else:
+                        variants["other_variants"].extend(options)
+
+                    variants["variant_types"].append(variant_type)
+                    logger.debug(f"      Found {len(options)} {variant_type} options")
+
+            except Exception as e:
+                logger.debug(f"      Pattern {selector}: {e}")
+                continue
+
+        # Calculate total
+        variants["total_variants"] = (
+            len(variants["color_variants"]) +
+            len(variants["size_variants"]) +
+            len(variants["other_variants"])
+        )
+
+        if variants["total_variants"] > 0:
+            logger.info(f"      Found {variants['total_variants']} variants: {', '.join(variants['variant_types'])}")
+
+    except Exception as e:
+        logger.warning(f"      Error extracting variants: {e}")
+
+    return variants
+
+
 def parse_product_detail(page, asin: str) -> dict[str, Any] | None:
     """Parse complete product detail page.
 
@@ -257,18 +404,28 @@ def parse_product_detail(page, asin: str) -> dict[str, Any] | None:
         rating = extract_rating(page)
         description = extract_description(page)
         images = extract_images(page)
+        variants = extract_variants(page)
 
         # Combine images into single string
         images_str = " | ".join(images) if images else "N/A"
+
+        # Format variant data as strings for CSV
+        color_variants_str = " | ".join([v["name"] for v in variants.get("color_variants", [])])
+        size_variants_str = " | ".join([v["name"] for v in variants.get("size_variants", [])])
+        variant_types_str = " | ".join(variants.get("variant_types", []))
 
         product = {
             "asin": asin,
             "title": title,
             "price": price,
             "rating": rating,
-            "description": description[:500] if description else "N/A",  # Limit for CSV
+            "description": description[:500] if description else "N/A",
             "images": images_str,
             "image_count": len(images),
+            "color_variants": color_variants_str,
+            "size_variants": size_variants_str,
+            "variant_types": variant_types_str,
+            "total_variants": variants.get("total_variants", 0),
             "url": page.url,
         }
 

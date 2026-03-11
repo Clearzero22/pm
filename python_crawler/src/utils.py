@@ -49,6 +49,10 @@ def write_to_csv(data: List[dict[str, Any]], filepath: Path) -> None:
         "description",
         "image_count",
         "images",
+        "color_variants",
+        "size_variants",
+        "variant_types",
+        "total_variants",
         "url",
     ]
 
