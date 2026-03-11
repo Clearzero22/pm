@@ -1,6 +1,6 @@
-# Amazon Best Sellers Crawler
+# Amazon Crawler
 
-基于 Playwright 的亚马逊畅销商品爬虫，支持深度提取商品详情信息。
+基于 Playwright 的亚马逊商品爬虫，支持 **Best Sellers 榜单** 和 **关键词搜索** 两种模式。
 
 ## 功能特性
 
@@ -8,10 +8,12 @@
 
 | 功能 | 描述 |
 |------|------|
+| **双模式爬取** | Best Sellers 榜单 + 关键词搜索 |
 | **深度提取** | 点击进入商品详情页，获取完整信息 |
 | **人类行为模拟** | 随机滚动、随机暂停，模拟真实用户浏览 |
 | **多页支持** | 自动翻页抓取，智能去重 |
 | **多图片提取** | 自动提取商品高清图片（最多10张） |
+| **搜索排序** | 支持按价格、评分、发布时间排序 |
 | **详细日志** | DEBUG/INFO 级别可调，实时追踪抓取进度 |
 
 ### 提取的数据字段
@@ -46,6 +48,8 @@ uv run playwright install chromium
 
 ### 基本使用
 
+#### 模式 1: Best Sellers 榜单（默认）
+
 ```bash
 # 默认配置：1页，5个商品
 uv run python main.py
@@ -55,34 +59,74 @@ uv run python main.py --pages 2 --products 10
 
 # 无头模式（后台运行）
 uv run python main.py --headless
+```
 
-# 完整参数示例
+#### 模式 2: 关键词搜索
+
+```bash
+# 基础搜索
+uv run python main.py --search "water bottle"
+
+# 按评分排序（找高评分商品）
+uv run python main.py --search "blender" --sort review-rank
+
+# 按价格从低到高排序
+uv run python main.py --search "coffee maker" --sort price-asc
+
+# 指定类别搜索
+uv run python main.py --search "headphones" --category electronics
+
+# 组合参数
+uv run python main.py --search "mouse" --pages 2 --products 10 --sort price-desc --headless
+```
+
+#### 完整参数示例
+
+```bash
+# Best Sellers 模式
 uv run python main.py \
   --log-level DEBUG \
   --pages 3 \
   --products 20 \
   --headless \
-  --output my_products.csv
+  --output best_sellers.csv
+
+# 搜索模式
+uv run python main.py \
+  --search "wireless earbuds" \
+  --sort review-rank \
+  --category electronics \
+  --pages 2 \
+  --products 15 \
+  --headless \
+  --output search_results.csv
 ```
 
 ## 命令行参数
 
 | 参数 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
+| **通用参数** ||||
 | `--log-level` | INFO/DEBUG/WARNING/ERROR | INFO | 日志级别 |
-| `--pages` | 数字 | 1 | 抓取多少页 Best Sellers |
+| `--pages` | 数字 | 1 | 抓取多少页 |
 | `--products` | 数字 | 5 | 每页提取多少个商品 |
 | `--headless` | flag | False | 是否显示浏览器窗口 |
 | `--output` | 文件名 | amazon_products.csv | 输出 CSV 文件名 |
+| **搜索模式参数** ||||
+| `--search` | 字符串 | - | 搜索关键词（启用搜索模式） |
+| `--sort` | relevance/price-asc/price-desc/review-rank/date-desc | relevance | 搜索结果排序方式 |
+| `--category` | 字符串 | - | Amazon 类别过滤（如 kitchen, electronics） |
 
 ## 项目结构
 
 ```
 python_crawler/
-├── main.py                          # CLI 入口
+├── main.py                          # CLI 入口（双模式支持）
+├── test_search.py                   # 搜索功能测试脚本
 ├── src/
 │   ├── __init__.py                  # 包初始化
-│   ├── crawler.py                   # 主爬虫逻辑
+│   ├── crawler.py                   # Best Sellers 爬虫
+│   ├── search_crawler.py            # 关键词搜索爬虫 ⭐ NEW
 │   ├── product_detail_parser.py     # 详情页解析
 │   ├── parser.py                    # 列表页解析（备用）
 │   └── utils.py                     # CSV 工具函数
@@ -176,6 +220,42 @@ A: 使用 `--headless` 模式，减少 `--products` 数量，或调整暂停时�
 
 **Q: 抓取会被封吗？**
 A: 本爬虫已加入人类行为模拟，但仍建议控制抓取频率，避免大量并发请求。
+
+---
+
+## 使用场景示例
+
+### 场景 1: 找高评分低价格商品（选品机会）
+
+```bash
+# 搜索水杯，按评分排序
+uv run python main.py --search "water bottle" --sort review-rank --pages 2 --products 20
+
+# 然后用仪表盘分析结果
+bash run_dashboard.sh
+# 在"选品建议"标签页查看高评分低价机会
+```
+
+### 场景 2: 价格竞争分析
+
+```bash
+# 搜索蓝牙耳机，按价格从低到高排序
+uv run python main.py --search "bluetooth headphones" --sort price-asc --pages 3 --products 30
+```
+
+### 场景 3: 新品追踪
+
+```bash
+# 搜索新品，按发布时间排序
+uv run python main.py --search "smart watch" --sort date-desc --pages 2
+```
+
+### 场景 4: 特定类别搜索
+
+```bash
+# 只在厨房类别搜索
+uv run python main.py --search "air fryer" --category kitchen --sort review-rank
+```
 
 ---
 
