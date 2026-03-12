@@ -67,6 +67,10 @@ def write_to_csv(data: List[dict[str, Any]], filepath: Path) -> None:
             cleaned_item[key] = value
         cleaned_data.append(cleaned_item)
 
+    # Ensure parent directory exists
+    filepath = Path(filepath)
+    filepath.parent.mkdir(parents=True, exist_ok=True)
+
     # Write to CSV
     with open(filepath, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")

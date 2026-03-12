@@ -255,10 +255,15 @@ class AmazonCrawler:
         """Save results to CSV.
 
         Args:
-            filename: Output filename
+            filename: Output filename (can be relative or absolute path)
         """
-        self.output_dir.mkdir(exist_ok=True)
-        filepath = self.output_dir / filename
+        filepath = Path(filename)
+
+        # Only use output_dir if filename is just a name (no directory)
+        if filepath.parent == Path("."):
+            self.output_dir.mkdir(exist_ok=True)
+            filepath = self.output_dir / filename
+
         write_to_csv(self.all_products, filepath)
         logger.info(f"✓ CSV saved: {filepath}")
 

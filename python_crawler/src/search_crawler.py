@@ -424,16 +424,20 @@ class AmazonSearchCrawler:
         """Save results to CSV.
 
         Args:
-            filename: Output filename (auto-generated if None)
+            filename: Output filename (auto-generated if None, can be relative or absolute path)
         """
-        self.output_dir.mkdir(exist_ok=True)
-
         if filename is None:
             # Generate filename from keyword
             safe_keyword = self.keyword.replace(" ", "_").replace("/", "_")[:30]
             filename = f"amazon_search_{safe_keyword}.csv"
 
-        filepath = self.output_dir / filename
+        filepath = Path(filename)
+
+        # Only use output_dir if filename is just a name (no directory)
+        if filepath.parent == Path("."):
+            self.output_dir.mkdir(exist_ok=True)
+            filepath = self.output_dir / filename
+
         write_to_csv(self.all_products, filepath)
         logger.info(f"✓ CSV saved: {filepath}")
 
