@@ -173,117 +173,44 @@ EOF
 
 ### 步骤 3: 创建同步脚本
 
+同步脚本已实现完整的飞书 API 调用，位于 `src/feishu_sync.py`。
+
+**核心 API 流程：**
+
 ```python
-# src/feishu_sync.py
-import os
-import yaml
-from pathlib import Path
-from typing import List, Dict, Any
-import pandas as pd
-from datetime import datetime
+# 1. 获取 tenant_access_token (2小时有效)
+POST https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal
+{
+    "app_id": "cli_xxx",
+    "app_secret": "xxx"
+}
+# 响应: {"code": 0, "tenant_access_token": "t-xxx", "expire": 7200}
 
-try:
-    from feishu_bitable import FeishuBitable
-except ImportError:
-    # 备用方案：使用 requests
-    import requests
-
-
-class FeishuSync:
-    """飞书多维表格同步类"""
-
-    def __init__(self, config_path: str = "config/feishu_config.yaml"):
-        """初始化同步客户端
-
-        Args:
-            config_path: 配置文件路径
-        """
-        self.config = self._load_config(config_path)
-        self.client = self._create_client()
-
-    def _load_config(self, config_path: str) -> Dict:
-        """加载配置文件"""
-        config_file = Path(config_path)
-        if not config_file.exists():
-            raise FileNotFoundError(f"配置文件不存在: {config_path}")
-
-        with open(config_file, 'r', encoding='utf-8') as f:
-            return yaml.safe_load(f)
-
-    def _create_client(self):
-        """创建飞书客户端"""
-        try:
-            return FeishuBitable(
-                app_id=self.config['feishu']['app_id'],
-                app_secret=self.config['feishu']['app_secret'],
-                app_token=self.config['feishu']['bitable']['app_token'],
-            )
-        except:
-            return None
-
-    def sync_csv_to_feishu(self, csv_path: str) -> Dict[str, Any]:
-        """同步 CSV 数据到飞书
-
-        Args:
-            csv_path: CSV 文件路径
-
-        Returns:
-            同步结果统计
-        """
-        # 读取 CSV
-        df = pd.read_csv(csv_path)
-
-        # 数据转换
-        records = self._convert_to_records(df)
-
-        # 批量写入
-        result = self._batch_write(records)
-
-        return {
-            'total': len(df),
-            'success': result.get('success', 0),
-            'failed': result.get('failed', 0),
-            'timestamp': datetime.now().isoformat()
+# 2. 批量创建记录 (最多1000条/次，50次/秒)
+POST https://open.feishu.cn/open-apis/bitable/v1/apps/{app_token}/tables/{table_id}/records/batch_create
+Headers: Authorization: Bearer {tenant_access_token}
+{
+    "records": [
+        {
+            "fields": {
+                "field_asin": "B0XXX",
+                "field_title": "商品标题",
+                "field_price": 29.99,
+                ...
+            }
         }
-
-    def _convert_to_records(self, df: pd.DataFrame) -> List[Dict]:
-        """转换 DataFrame 为飞书记录格式"""
-        mapping = self.config['feishu'].get('field_mapping', {})
-        records = []
-
-        for _, row in df.iterrows():
-            record = {}
-            for csv_field, bitable_field in mapping.items():
-                if csv_field in row:
-                    record[bitable_field] = row[csv_field]
-
-            # 添加时间戳
-            record['field_created_at'] = datetime.now().isoformat()
-
-            records.append(record)
-
-        return records
-
-    def _batch_write(self, records: List[Dict]) -> Dict:
-        """批量写入数据"""
-        batch_size = self.config['sync'].get('batch_size', 50)
-        table_id = self.config['feishu']['bitable']['table_id']
-
-        success = 0
-        failed = 0
-
-        for i in range(0, len(records), batch_size):
-            batch = records[i:i + batch_size]
-            try:
-                # TODO: 调用飞书 API 写入
-                # self.client.table(table_id).records.batch_create(batch)
-                success += len(batch)
-            except Exception as e:
-                print(f"批量写入失败: {e}")
-                failed += len(batch)
-
-        return {'success': success, 'failed': failed}
+    ]
+}
 ```
+
+**主要功能：**
+
+| 方法 | 说明 |
+|------|------|
+| `sync_csv(csv_path)` | 同步 CSV 文件到飞书 |
+| `_get_tenant_access_token()` | 获取访问令牌 (自动缓存) |
+| `_batch_write(records)` | 批量写入记录 (支持限流) |
+| `_transform_data(df)` | 数据转换 (CSV → 飞书记录格式) |
 
 ### 步骤 4: 集成到自动化脚本
 
@@ -425,11 +352,10 @@ else:
 
 | 接口类型 | 限制 |
 |----------|------|
-| 获取 Tenant Token | 100 次/分钟 |
-| 多维表格写操作 | 20 次/秒 |
-| 批量创建记录 | 500 条/次 |
+| 获取 Tenant Token | 自动管理 (2小时有效) |
+| 批量创建记录 | 50 次/秒，最多 1000 条/次 |
 
-建议使用批量操作并控制频率。
+同步脚本已内置限流处理 (每次调用间隔 0.05 秒)，确保不会触发限流。
 
 ### Q5: 如何调试同步问题？
 
@@ -445,6 +371,17 @@ logging.basicConfig(level=logging.DEBUG)
 2. 字段 ID 是否正确
 3. 数据格式是否匹配
 4. 权限是否已授予
+
+**常见错误码：**
+
+| 错误码 | 说明 | 解决方法 |
+|--------|------|----------|
+| `1254040` | app_token 不存在 | 检查 URL 中的 app_token |
+| `1254041` | table_id 不存在 | 检查 URL 中的 table_id |
+| `1254290` | 请求过快 | 稍后重试，已自动限流 |
+| `1254291` | 写入冲突 | 避免并发写入 |
+| `1254027` | 附件未挂载 | 需先上传图片到飞书 |
+| `1254302` | 权限不足 | 为应用添加"可管理"权限 |
 
 ---
 

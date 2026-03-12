@@ -142,7 +142,7 @@ class FeishuSync:
 
         Args:
             records: List of records to write
-            batch_size: Batch size for API calls
+            batch_size: Batch size for API calls (max 1000 per Feishu API)
 
         Returns:
             Write result statistics
@@ -150,26 +150,40 @@ class FeishuSync:
         total = len(records)
         success = 0
         failed = 0
+        errors = []
 
-        # Note: This is a placeholder implementation
-        # In production, you would use the Feishu API
-        # For now, we simulate the sync
-
-        print(f"\n=== 飞书同步模拟 ===")
+        print(f"\n=== 飞书多维表格同步 ===")
         print(f"配置检查:")
         print(f"  - App ID: {self.config['app_id'][:10]}...")
         print(f"  - App Token: {self.config['app_token'][:10]}...")
         print(f"  - Table ID: {self.config['table_id'][:10]}...")
         print(f"\n准备同步 {total} 条记录...")
 
-        for i in range(0, total, batch_size):
-            batch = records[i:i + batch_size]
-            print(f"  批次 {i//batch_size + 1}: {len(batch)} 条记录")
+        # Get tenant access token
+        token = self._get_tenant_access_token()
+        if not token:
+            return {"total": total, "success": 0, "failed": total, "errors": ["Failed to get access token"]}
 
-            # TODO: 实际 API 调用
-            # self._api_call(batch)
+        # Batch write (max 500 per batch for safety, Feishu limit is 1000)
+        actual_batch_size = min(batch_size, 500)
+        for i in range(0, total, actual_batch_size):
+            batch = records[i:i + actual_batch_size]
+            print(f"  批次 {i//actual_batch_size + 1}: {len(batch)} 条记录...", end="")
 
-            success += len(batch)
+            result = self._api_call(token, batch)
+
+            if result.get("success"):
+                success += len(batch)
+                print(" ✓")
+            else:
+                failed += len(batch)
+                errors.append(result.get("error", "Unknown error"))
+                print(f" ✗ ({result.get('error', 'Unknown error')})")
+
+            # Rate limiting: Feishu allows 50 requests/second
+            # Add small delay to avoid hitting rate limits
+            import time
+            time.sleep(0.05)
 
         print(f"\n✓ 同步完成: {success} 条成功, {failed} 条失败")
 
@@ -177,20 +191,78 @@ class FeishuSync:
             "total": total,
             "success": success,
             "failed": failed,
+            "errors": errors,
         }
 
-    def _api_call(self, records: List[Dict]) -> Dict:
-        """Make actual Feishu API call.
+    def _get_tenant_access_token(self) -> str:
+        """Get tenant access token from Feishu API.
 
-        This is a placeholder for the actual implementation.
-        Refer to Feishu API documentation for details.
+        Returns:
+            Access token string or empty string on failure
         """
-        # TODO: Implement actual API call
-        # 1. Get tenant access token
-        # 2. Call batch create records API
-        # 3. Handle rate limits
-        # 4. Return results
-        pass
+        import requests
+
+        url = f"{self.api_base}/auth/v3/tenant_access_token/internal"
+        headers = {"Content-Type": "application/json; charset=utf-8"}
+        data = {
+            "app_id": self.config["app_id"],
+            "app_secret": self.config["app_secret"],
+        }
+
+        try:
+            response = requests.post(url, json=data, headers=headers, timeout=10)
+            response.raise_for_status()
+            result = response.json()
+
+            if result.get("code") == 0:
+                return result.get("tenant_access_token", "")
+            else:
+                print(f"  获取 Token 失败: {result.get('msg', 'Unknown error')}")
+                return ""
+        except Exception as e:
+            print(f"  获取 Token 异常: {e}")
+            return ""
+
+    def _api_call(self, token: str, records: List[Dict]) -> Dict:
+        """Make actual Feishu API call to batch create records.
+
+        Args:
+            token: Tenant access token
+            records: List of records to create
+
+        Returns:
+            Result dict with 'success' boolean and optional 'error' message
+        """
+        import requests
+
+        url = f"{self.api_base}/bitable/v1/apps/{self.config['app_token']}/tables/{self.config['table_id']}/records/batch_create"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json; charset=utf-8",
+        }
+        data = {"records": records}
+
+        try:
+            response = requests.post(url, json=data, headers=headers, timeout=30)
+            result = response.json()
+
+            if result.get("code") == 0:
+                return {"success": True}
+            else:
+                error_msg = result.get("msg", "Unknown error")
+                # Handle specific error codes
+                code = result.get("code")
+                if code == 1254290:  # TooManyRequest
+                    error_msg = "请求过快，请稍后重试"
+                elif code == 1254291:  # Write conflict
+                    error_msg = "并发冲突，请稍后重试"
+                return {"success": False, "error": error_msg, "code": code}
+        except requests.exceptions.Timeout:
+            return {"success": False, "error": "请求超时"}
+        except requests.exceptions.RequestException as e:
+            return {"success": False, "error": str(e)}
+        except Exception as e:
+            return {"success": False, "error": f"未知错误: {e}"}
 
 
 def main():
