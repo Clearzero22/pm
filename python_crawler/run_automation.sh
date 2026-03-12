@@ -24,6 +24,7 @@ HEADLESS=true
 OUTPUT="output/amazon_products_$(date +%Y%m%d_%H%M%S).csv"
 REPORT=true
 REMOTE_HOST=""
+SYNC_FEISHU=false
 
 # Function to print colored messages
 print_info() {
@@ -57,6 +58,7 @@ Options:
     -o, --output FILE        Output CSV filename
     --no-headless            Show browser window (default: headless)
     --no-report              Skip report generation
+    --feishu                 Sync data to Feishu Bitable after crawling
     -r, --remote HOST        Run on remote server (user@host format)
     -h, --help               Show this help message
 
@@ -64,14 +66,17 @@ Examples:
     # Local Best Sellers crawl
     $0 --pages 2 --products 20
 
-    # Local search crawl
-    $0 --mode search --keyword "water bottle" --pages 2 --products 20
+    # Local search crawl with Feishu sync
+    $0 --mode search --keyword "water bottle" --pages 2 --products 20 --feishu
 
     # Remote crawl
     $0 --mode search --keyword "blender" --remote user@server.example.com
 
     # Custom output location
     $0 --pages 3 --output output/my_results.csv
+
+    # Crawl and sync to Feishu
+    $0 --pages 2 --products 20 --feishu
 
 EOF
     exit 0
@@ -106,6 +111,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-report)
             REPORT=false
+            shift
+            ;;
+        --feishu)
+            SYNC_FEISHU=true
             shift
             ;;
         -r|--remote)
@@ -162,6 +171,7 @@ echo "  Products/page:  $PRODUCTS"
 echo "  Headless:       $HEADLESS"
 echo "  Output:         $OUTPUT"
 echo "  Report:         $REPORT"
+echo "  Feishu Sync:    $SYNC_FEISHU"
 if [[ -n "$REMOTE_HOST" ]]; then
     echo "  Remote Host:    $REMOTE_HOST"
 fi
@@ -211,6 +221,20 @@ if [[ "$REPORT" == true ]]; then
     print_success "Report generated!"
 fi
 
+# Sync to Feishu if enabled
+if [[ "$SYNC_FEISHU" == true ]]; then
+    print_info "Syncing data to Feishu Bitable..."
+
+    # Check if feishu sync module exists
+    if [[ -f "src/feishu_sync.py" ]]; then
+        uv run python src/feishu_sync.py "$OUTPUT"
+        print_success "Data synced to Feishu!"
+    else
+        print_warning "Feishu sync module not found. Skipping..."
+        print_info "To enable Feishu sync, refer to: AMAZON_TO_FEISHU_GUIDE.md"
+    fi
+fi
+
 # Display summary
 echo ""
 echo "============================================================"
@@ -222,6 +246,9 @@ if [[ "$REPORT" == true ]]; then
     echo "  Report:         $REPORT_FILE"
     JSON_FILE="${OUTPUT%.csv}_report.json"
     echo "  Statistics:     $JSON_FILE"
+fi
+if [[ "$SYNC_FEISHU" == true ]]; then
+    echo "  Feishu:         ✅ Synced to Bitable"
 fi
 echo "============================================================"
 echo ""
