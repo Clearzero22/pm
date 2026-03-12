@@ -6,6 +6,7 @@
 import os
 import sys
 import subprocess
+import platform as plt
 from pathlib import Path
 
 
@@ -72,7 +73,12 @@ def check_playwright():
     """检查 Playwright"""
     try:
         import playwright
-        return True, f"Playwright {playwright.__version__}"
+        # 尝试获取版本（如果没有 __version__ 就只用包名）
+        try:
+            version = playwright.__version__
+        except AttributeError:
+            version = "已安装"
+        return True, f"Playwright {version}"
     except ImportError:
         return False, "Playwright 未安装"
 
@@ -177,10 +183,10 @@ def check_network():
 
 def detect_platform():
     """检测运行平台"""
-    import platform
+    import platform as plt
 
-    system = platform.system()
-    machine = platform.machine()
+    system = plt.system()
+    machine = plt.machine()
 
     platform_info = f"{system} ({machine})"
 
@@ -206,11 +212,12 @@ def main():
     print_header("Amazon Crawler 部署验证")
 
     # 检测平台
-    platform, system_type = detect_platform()
-    print(f"📱 平台: {platform} ({system_type})")
+    platform_info, system_type = detect_platform()
+    print(f"📱 平台: {platform_info} ({system_type})")
     print()
 
     # 运行所有检查
+    results = {}
     checks = [
         ("Python 版本", check_python_version),
         ("uv 包管理器", check_uv),
@@ -222,14 +229,14 @@ def main():
     ]
 
     # 内存检查 (Linux only)
-    if platform.system() == "Linux":
+    if plt.system() == "Linux":
         checks.append(("内存", check_memory))
 
     # 网络检查 (可选，可能慢)
     # checks.append(("网络连接", check_network))
 
-    results = {}
-    for name, (success, message) in checks:
+    for name, check_func in checks:
+        success, message = check_func()
         results[name] = (success, message)
         print_result(name, success, message)
 
